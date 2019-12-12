@@ -2052,6 +2052,8 @@ int main(int argc, char **argv) {
   int kJOYSTICK = 0;  // joystick by index
   char* outputFilename = NULL;
 
+  stereoMode = ST_OCULUS;
+
   // Peel known options off the back..
   while (argc>1) {
     if (!strcmp(argv[argc-1], "--overunder")) {
