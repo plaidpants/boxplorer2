@@ -2,7 +2,8 @@
 // sdk4 mods by marius
 
 #include "oculus_sdk4.h"
-#include "OVR.h"
+//#include "OVR.h"
+#include "OVR_CAPI_GL.h"
 
 #pragma comment(lib, "libovr.lib")
 #pragma comment(lib, "winmm.lib")
@@ -16,26 +17,26 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "gdi32.lib")
 
-static ovrHmd hmd = NULL;
-
+static ovrSession hmd;
+static ovrGraphicsLuid hmd2;
 int InitOculusSDK() {
   ovr_Initialize(nullptr);
-  ovrResult  result = ovrHmd_Create(0, &hmd);
+  ovrResult  result = ovr_Create(&hmd, &hmd2);
 
-  if (!hmd) {
+  if (OVR_FAILURE(result)) {
     return 0;
   } else {
-    ovrSizei resolution = hmd->Resolution;
-    printf("HMD rez %dx%d\n", resolution.w, resolution.h);
+    //ovrSizei resolution = hmd->Resolution;
+    //printf("HMD rez %dx%d\n", resolution.w, resolution.h);
   }
 
-  ovrHmd_SetEnabledCaps(hmd,
-      ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction);
+  //ovrHmd_SetEnabledCaps(hmd,
+  //    ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction);
 
-  ovrHmd_ConfigureTracking(hmd,
-      ovrTrackingCap_Orientation
-      | ovrTrackingCap_MagYawCorrection
-      | ovrTrackingCap_Position, 0);
+ // ovrHmd_ConfigureTracking(hmd,
+  //    ovrTrackingCap_Orientation
+ //     | ovrTrackingCap_MagYawCorrection
+  //    | ovrTrackingCap_Position, 0);
   
   return 1;
 }
@@ -55,7 +56,7 @@ void GetOculusView(float view[3]) {
 
 bool GetOculusQuat(float quat[4]) {
   bool result = false;
-  ovrTrackingState ts = ovrHmd_GetTrackingState(hmd, 0.0/*ovr_GetTimeInSeconds()*/);
+  ovrTrackingState ts = ovr_GetTrackingState(hmd, 0.0/*ovr_GetTimeInSeconds()*/, ovrFalse);
   if (ts.StatusFlags & (ovrStatus_OrientationTracked)) {
     ovrPoseStatef poseState = ts.HeadPose;
     ovrPosef posef = poseState.ThePose;
@@ -74,7 +75,7 @@ bool GetOculusQuat(float quat[4]) {
     ovrPosef posef = poseState.ThePose;
     ovrVector3f p = posef.Position;
 
-    printf("pos(%f, %f, %f)\n", p.x, p.y, p.z);
+    //printf("pos(%f, %f, %f)\n", p.x, p.y, p.z);
   }
 #endif
   return result;
@@ -83,7 +84,7 @@ bool GetOculusQuat(float quat[4]) {
 void ReleaseOculusSDK()
 {
   if (hmd) {
-    ovrHmd_Destroy(hmd);
+    ovr_Destroy(hmd);
     hmd = NULL;
   }
   ovr_Shutdown();
@@ -93,8 +94,8 @@ void SetOculusPrediction(float time) {
 }
 
 int GetOculusDeviceInfo(hmd_settings_t *hmd_settings) {
-  hmd_settings->h_resolution = hmd->Resolution.w;
-  hmd_settings->v_resolution = hmd->Resolution.h;
+ // hmd_settings->h_resolution = (ovrHmdDesc_)hmd->Resolution.w;
+//  hmd_settings->v_resolution = (ovrHmdDesc_)hmd->Resolution.h;
 #if 0
   hmd_settings->interpupillary_distance = hmdinfo.InterpupillaryDistance;
   hmd_settings->lens_separation_distance = hmdinfo.LensSeparationDistance;
@@ -110,5 +111,5 @@ int GetOculusDeviceInfo(hmd_settings_t *hmd_settings) {
 }
 
 void ResetOculusOrientation() {
-  ovrHmd_RecenterPose(hmd);
+	ovr_RecenterTrackingOrigin(hmd);
 }
