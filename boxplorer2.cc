@@ -241,154 +241,154 @@ void clearGlContext();  // fwd decl.
 // Our OpenGL SDL2 window.
 static const int kMAXDISPLAYS = 6;
 class GFX {
- public:
-  GFX() : display_(-1),
-          width_(0), height_(0),
-          last_x_(SDL_WINDOWPOS_CENTERED),
-          last_y_(SDL_WINDOWPOS_CENTERED),
-          last_width_(0), last_height_(0),
-          fullscreen_(false),
-          window_(NULL),
-          glcontext_(0) {}
+public:
+    GFX() : display_(-1),
+        width_(0), height_(0),
+        last_x_(SDL_WINDOWPOS_CENTERED),
+        last_y_(SDL_WINDOWPOS_CENTERED),
+        last_width_(0), last_height_(0),
+        fullscreen_(false),
+        window_(NULL),
+        glcontext_(0) {}
 
-  void init() {
-    //requires SDL_Init(SDL_INIT_VIDEO);
-    for (ndisplays_ = 0; ndisplays_ < SDL_GetNumVideoDisplays() &&
-                         ndisplays_ < kMAXDISPLAYS; ++ndisplays_) {
-      SDL_GetCurrentDisplayMode(ndisplays_, &mode_[ndisplays_]);
-      SDL_GetDisplayBounds(ndisplays_, &rect_[ndisplays_]);
-    }
-  }
-
-  ~GFX() { reset(); }
-
-  void reset() {
-    if (glcontext_) {
-      clearGlContext();
-      SDL_GL_DeleteContext(glcontext_);
-      glcontext_ = 0;
-    }
-    if (window_) {
-      SDL_DestroyWindow(window_);
-      window_ = NULL;
-    }
-    display_ = -1;
-  }
-
-  bool resize(int w, int h) {
-    int d = display_;
-
-    // ignore resize events when fullscreen.
-    if (fullscreen_) return false;
-
-    // ignore resize events for fullscreen width.
-    if (d != -1 && w == rect_[d].w) return false;
-
-    if (window_) {
-      // capture current display.
-      d = SDL_GetWindowDisplayIndex(window_);
-      // capture current window position.
-      SDL_GetWindowPosition(window_, &last_x_, &last_y_);
+    void init() {
+        //requires SDL_Init(SDL_INIT_VIDEO);
+        for (ndisplays_ = 0; ndisplays_ < SDL_GetNumVideoDisplays() &&
+            ndisplays_ < kMAXDISPLAYS; ++ndisplays_) {
+            SDL_GetCurrentDisplayMode(ndisplays_, &mode_[ndisplays_]);
+            SDL_GetDisplayBounds(ndisplays_, &rect_[ndisplays_]);
+        }
     }
 
-    reset();
+    ~GFX() { reset(); }
 
-    printf(__FUNCTION__ ": %dx%d display %d\n", w, h, d);
-    window_ = SDL_CreateWindow("test",
-       last_x_, last_y_,
-       w, h,
-       SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
-    glcontext_ = SDL_GL_CreateContext(window_);
-    display_ = d;
-    last_width_ = width_ = w;
-    last_height_ = height_ = h;
-    return enableShaderProcs();  // re-fetch ptrs in new context.
-  }
-
-  bool toggleFullscreen() {
-    if (!window_) return false;
-
-    // capture current display.
-    int d = SDL_GetWindowDisplayIndex(window_);
-
-    if (!fullscreen_) {
-      // capture current window position.
-      SDL_GetWindowPosition(window_, &last_x_, &last_y_);
+    void reset() {
+        if (glcontext_) {
+            clearGlContext();
+            SDL_GL_DeleteContext(glcontext_);
+            glcontext_ = 0;
+        }
+        if (window_) {
+            SDL_DestroyWindow(window_);
+            window_ = NULL;
+        }
+        display_ = -1;
     }
 
-    reset();
+    bool resize(int w, int h) {
+        int d = display_;
 
-    // Oculus / Acer hackery:
-    // if current resolution matches a display, go
-    // fullscreen on that display.
-    // Otherwise, stick with current.
-    bool likelyOculus = (height_ == 800);
-    bool foundMatch = false;
-    int alternate1080p = -1;
-    for (int i = 0; i < ndisplays_; ++i) {
-      if ((width_ == rect_[i].w && height_ == rect_[i].h)) {
-        d = i;  // exact match, done.
-        foundMatch = true;
-        break;
-      }
-      if (rect_[i].h == 1080) alternate1080p = i;
-      printf("screen %d: %dx%d\n", i, rect_[i].w, rect_[i].h);
+        // ignore resize events when fullscreen.
+        if (fullscreen_) return false;
+
+        // ignore resize events for fullscreen width.
+        if (d != -1 && w == rect_[d].w) return false;
+
+        if (window_) {
+            // capture current display.
+            d = SDL_GetWindowDisplayIndex(window_);
+            // capture current window position.
+            SDL_GetWindowPosition(window_, &last_x_, &last_y_);
+        }
+
+        reset();
+
+        printf(__FUNCTION__ ": %dx%d display %d\n", w, h, d);
+        window_ = SDL_CreateWindow("test",
+            last_x_, last_y_,
+            w, h,
+            SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+        glcontext_ = SDL_GL_CreateContext(window_);
+        display_ = d;
+        last_width_ = width_ = w;
+        last_height_ = height_ = h;
+        return enableShaderProcs();  // re-fetch ptrs in new context.
     }
 
-    int targetWidth = rect_[d].w;
-    int targetHeight = rect_[d].h;
+    bool toggleFullscreen() {
+        if (!window_) return false;
 
-    if (!foundMatch && likelyOculus && alternate1080p != -1) {
-       // Could not find exact match.
-       // Oculus might be duplicating a 1080p desktop.
-       d = alternate1080p;
-       // Stick w/ oculus resolution, rather than native screen one.
-       targetWidth = width_;
-       targetHeight = height_;
-    }
+        // capture current display.
+        int d = SDL_GetWindowDisplayIndex(window_);
 
-    if (!fullscreen_) {
-      printf(__FUNCTION__ ": to fullscreen %dx%d display %d\n",
-                      targetWidth, targetHeight, d);
-      window_ = SDL_CreateWindow("boxplorer2",
-          rect_[d].x, rect_[d].y,
-          targetWidth, targetHeight,
-          SDL_WINDOW_OPENGL|SDL_WINDOW_FULLSCREEN);
-      width_ = targetWidth;
-      height_ = targetHeight;
+        if (!fullscreen_) {
+            // capture current window position.
+            SDL_GetWindowPosition(window_, &last_x_, &last_y_);
+        }
+
+        reset();
+
+        // Oculus / Acer hackery:
+        // if current resolution matches a display, go
+        // fullscreen on that display.
+        // Otherwise, stick with current.
+        bool likelyOculus = (height_ == 800);
+        bool foundMatch = false;
+        int alternate1080p = -1;
+        for (int i = 0; i < ndisplays_; ++i) {
+            if ((width_ == rect_[i].w && height_ == rect_[i].h)) {
+                d = i;  // exact match, done.
+                foundMatch = true;
+                break;
+            }
+            if (rect_[i].h == 1080) alternate1080p = i;
+            printf("screen %d: %dx%d\n", i, rect_[i].w, rect_[i].h);
+        }
+
+        int targetWidth = rect_[d].w;
+        int targetHeight = rect_[d].h;
+
+        if (!foundMatch && likelyOculus && alternate1080p != -1) {
+            // Could not find exact match.
+            // Oculus might be duplicating a 1080p desktop.
+            d = alternate1080p;
+            // Stick w/ oculus resolution, rather than native screen one.
+            targetWidth = width_;
+            targetHeight = height_;
+        }
+
+        if (!fullscreen_) {
+            printf(__FUNCTION__ ": to fullscreen %dx%d display %d\n",
+                targetWidth, targetHeight, d);
+            window_ = SDL_CreateWindow("boxplorer2",
+                rect_[d].x, rect_[d].y,
+                targetWidth, targetHeight,
+                SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
+            width_ = targetWidth;
+            height_ = targetHeight;
     } else {
-      printf(__FUNCTION__ ": from fullscreen %dx%d display %d\n",
-                      last_width_, last_height_, d);
-      window_ = SDL_CreateWindow("boxplorer2",
-          last_x_, last_y_,
-          last_width_, last_height_,
-          SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
-      width_ = last_width_;
-      height_ = last_height_;
+            printf(__FUNCTION__ ": from fullscreen %dx%d display %d\n",
+                last_width_, last_height_, d);
+            window_ = SDL_CreateWindow("boxplorer2",
+                last_x_, last_y_,
+                last_width_, last_height_,
+                SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+            width_ = last_width_;
+            height_ = last_height_;
+        }
+
+        glcontext_ = SDL_GL_CreateContext(window_);
+        display_ = d;
+
+        fullscreen_ = !fullscreen_;
+        return enableShaderProcs();  // re-fetch ptrs in new context.
     }
 
-    glcontext_ = SDL_GL_CreateContext(window_);
-    display_ = d;
+    SDL_Window* window() { return window_; }
+    int width() const { return width_; }
+    int height() const { return height_; }
 
-    fullscreen_ = !fullscreen_;
-    return enableShaderProcs();  // re-fetch ptrs in new context.
-  }
-
-  SDL_Window* window() { return window_; }
-  int width() const { return width_; }
-  int height() const { return height_; }
-
- private:
-  int display_;
-  int width_, height_;  // current dimensions, window or fullscreen.
-  int last_x_,last_y_;  // last known position of window
-  int last_width_, last_height_;  // last known dimension of window.
-  bool fullscreen_;
-  int ndisplays_;
-  SDL_Window* window_;
-  SDL_GLContext glcontext_;
-  SDL_DisplayMode mode_[kMAXDISPLAYS];
-  SDL_Rect rect_[kMAXDISPLAYS];
+private:
+    int display_;
+    int width_, height_;  // current dimensions, window or fullscreen.
+    int last_x_, last_y_;  // last known position of window
+    int last_width_, last_height_;  // last known dimension of window.
+    bool fullscreen_;
+    int ndisplays_;
+    SDL_Window* window_;
+    SDL_GLContext glcontext_;
+    SDL_DisplayMode mode_[kMAXDISPLAYS];
+    SDL_Rect rect_[kMAXDISPLAYS];
 } window;
 
 // Optional #defines for glsl compilation from .cfg file.
@@ -1433,6 +1433,7 @@ bool setupDirectories(const char* configFile) {
 bool initGraphics(bool fullscreenToggle, int w, int h, int frameno = 0) {
 
 	//_glActiveTexture = (PFNGLACTIVETEXTUREPROC)getProcAddress("glActiveTexture");
+  _glActiveTexture = (PFNGLACTIVETEXTUREPROC)SDL_GL_GetProcAddress("glActiveTexture");
 
   // Set attributes for the OpenGL window.
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -1534,7 +1535,7 @@ bool initGraphics(bool fullscreenToggle, int w, int h, int frameno = 0) {
 
       glGenFramebuffers(1, &de_fbo);
 
-      //_glActiveTexture(GL_TEXTURE0);
+      _glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, de_texture);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -1578,7 +1579,7 @@ bool initGraphics(bool fullscreenToggle, int w, int h, int frameno = 0) {
     // Load background image into texture.
 
     glGenTextures(1, &background_texture);
-    //_glActiveTexture(GL_TEXTURE0);
+    _glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, background_texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -1612,7 +1613,7 @@ bool initGraphics(bool fullscreenToggle, int w, int h, int frameno = 0) {
 
     for (size_t i = 0; i < ARRAYSIZE(mainFbo); ++i) {
       // Initialize depth texture
-      //_glActiveTexture(GL_TEXTURE0);
+      _glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, mainDepth[i]);
 
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1627,7 +1628,7 @@ bool initGraphics(bool fullscreenToggle, int w, int h, int frameno = 0) {
       CHECK_ERROR;
 
       // Initialize color texture
-      //_glActiveTexture(GL_TEXTURE0);
+      _glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, mainTex[i]);
 
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp);
@@ -1678,7 +1679,7 @@ bool initGraphics(bool fullscreenToggle, int w, int h, int frameno = 0) {
       glGenTextures(ARRAYSIZE(blurTex), blurTex);
 
       for (size_t i = 0; i < ARRAYSIZE(blurTex); ++i) {
-        //_glActiveTexture(GL_TEXTURE0);
+        _glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, blurTex[i]);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1720,7 +1721,7 @@ bool initGraphics(bool fullscreenToggle, int w, int h, int frameno = 0) {
       glGenTextures(1, &scratchTex);
       glGenFramebuffers(1, &scratchFbo);
 
-      //_glActiveTexture(GL_TEXTURE0);
+      _glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, scratchTex);
 
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1752,7 +1753,7 @@ bool initGraphics(bool fullscreenToggle, int w, int h, int frameno = 0) {
       glGenTextures(1, &fxaaTex);
       glGenFramebuffers(1, &fxaaFbo);
 
-      //_glActiveTexture(GL_TEXTURE0);
+      _glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, fxaaTex);
 
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -2052,7 +2053,9 @@ int main(int argc, char **argv) {
   int kJOYSTICK = 0;  // joystick by index
   char* outputFilename = NULL;
 
+  //force oculus mode
   stereoMode = ST_OCULUS;
+  defines.append("#define ST_OCULUS\n");
 
   // Peel known options off the back..
   while (argc>1) {
@@ -2165,7 +2168,7 @@ int main(int argc, char **argv) {
   if (fullscreen) config.fullscreen = fullscreen;
 
 #if defined(_WIN32)
-  if (stereoMode == ST_OCULUS) {
+  if (stereoMode == ST_OCULUS){
     if (!InitOculusSDK()) {
       die("InitOculusSDK() fail!");
     }
@@ -2236,7 +2239,7 @@ int main(int argc, char **argv) {
     config.fov_x = 100; config.fov_y = 100.0;
     fixedFov = true;
     // Enable multipass but not dof and fxaa.
-    config.backbuffer = 1;
+    //config.backbuffer = 1; // this results in a black screen if I leave this here
     config.enable_fxaa = 0;
     config.enable_dof = 0;
   }
@@ -2287,7 +2290,8 @@ int main(int argc, char **argv) {
   atexit(SDL_Quit);
 
   window.init();
-
+  // need to call this to create the window before we do any SDL stuff later
+  window.resize(800,800);
   if (kJOYSTICK) {
     // open a joystick by explicit index.
     SDL_InitSubSystem(SDL_INIT_JOYSTICK);
@@ -2532,14 +2536,14 @@ int main(int argc, char **argv) {
 
     // Set up input texture to fractal shader.
     if (background_texture) {
-      //_glActiveTexture(GL_TEXTURE0);
+      _glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, background_texture);
       glUniform1i(glGetUniformLocation(program, "iChannel0"), 0);
     }
 
     // Set up backbuffer as input.
     if (config.backbuffer) {
-      //_glActiveTexture(GL_TEXTURE1);
+      _glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, mainTex[(frameno&1)^1]);
       glUniform1i(glGetUniformLocation(program, "iBackbuffer"), 1);
       glUniform1i(glGetUniformLocation(program, "iBackbufferCount"),
@@ -2596,7 +2600,7 @@ int main(int argc, char **argv) {
 
       if (!config.backbuffer) {
         glEnable(GL_TEXTURE_2D);
-        //_glActiveTexture(GL_TEXTURE0);
+        _glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, currentFrame);
         // Mipmap the frame.
         // TODO: not needed by default. Costly?
@@ -2606,7 +2610,7 @@ int main(int argc, char **argv) {
       if (fxaa.ok() && config.enable_fxaa && camera.fxaa) {
         // We have a fxaa shader.
         // Compute and point currentFrame(s) at output.
-        //_glActiveTexture(GL_TEXTURE0);
+        _glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, currentFrame);
 
         glBindFramebuffer(GL_FRAMEBUFFER, fxaaFbo);
@@ -2636,16 +2640,16 @@ int main(int argc, char **argv) {
           switch (i) {
             case 0: {
               // First input is current frame.
-              //_glActiveTexture(GL_TEXTURE0);
+              _glActiveTexture(GL_TEXTURE0);
               glBindTexture(GL_TEXTURE_2D, currentFrame);
             } break;
             default: {
               int odd = (i&1);
               if (odd) {
-                //_glActiveTexture(GL_TEXTURE0);
+                _glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, scratchTex);
               } else {
-                //_glActiveTexture(GL_TEXTURE0);
+                _glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, currentFrame);
               }
               writeLevel = (i+1)/2 - 1;
@@ -2690,18 +2694,18 @@ int main(int argc, char **argv) {
       glEnable(GL_TEXTURE_2D);
 
       // Pass main render as texture 0
-      //_glActiveTexture(GL_TEXTURE0);
+      _glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, currentFrame);
       glUniform1i(glGetUniformLocation(final_program, "iTexture"), 0);
 
       // Pass main depth as texture 1
-      //_glActiveTexture(GL_TEXTURE1);
+      _glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, mainDepth[frameno&1]);
       glUniform1i(glGetUniformLocation(final_program, "iDepth"), 1);
 
       if (dof.ok() && camera.enable_dof && camera.aperture != 0) {
         // Pass blur textures as 2 and 3, if we computed them.
-        //_glActiveTexture(GL_TEXTURE2);
+        _glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, blurTex[0]);
         glUniform1i(glGetUniformLocation(final_program, "iBlur0"), 2);
         //_glActiveTexture(GL_TEXTURE3);
@@ -2742,13 +2746,13 @@ int main(int argc, char **argv) {
       // Wtf? need to deactivate each texture unit; glDisable is not enough.
       // Otherwise, texturing messes with color drawn and keyframe select fails.
       glEnable(GL_TEXTURE_2D);
-      //_glActiveTexture(GL_TEXTURE0);
+      _glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, 0);
-      //_glActiveTexture(GL_TEXTURE1);
+      _glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, 0);
-      //_glActiveTexture(GL_TEXTURE2);
+      _glActiveTexture(GL_TEXTURE2);
       glBindTexture(GL_TEXTURE_2D, 0);
-      //_glActiveTexture(GL_TEXTURE3);
+      _glActiveTexture(GL_TEXTURE3);
       glBindTexture(GL_TEXTURE_2D, 0);
       //glDisable(GL_TEXTURE_2D);
 

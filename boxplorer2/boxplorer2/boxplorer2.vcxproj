@@ -77,7 +77,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\..\OculusSDK4/LibOVR/Include;..\..\SDL2/include;..\..\include;..\..\AntTweakBar/include;..\..\AntTweakBar/src;..\..\sixense;/WinDDK/7600.16385.1/inc/atl71;..\..\OculusSDK4\LibOVRKernel\Src\;$(IncludePath)</IncludePath>
-    <LibraryPath>..\..\SDL2/lib/x64;..\..\OculusSDK4\LibOVR\Lib\Windows\x64\Release\VS2013\;..\..\sixense;J:\Unity Projects\boxplorer2\OculusSDK4\LibOVR\Lib\Windows\x64\Release\VS2017;$(LibraryPath)</LibraryPath>
+    <LibraryPath>J:\Unity Projects\boxplorer2\OculusSDK4\LibOVR\Lib\Win32\VS2013;..\..\SDL2/lib/x64;..\..\OculusSDK4\LibOVR\Lib\Windows\x64\Release\VS2017\;..\..\sixense;J:\Unity Projects\boxplorer2\OculusSDK4\LibOVR\Lib\Windows\x64\Release\VS2017;J:\Unity Projects\boxplorer2\OculusSDK4\LibOVR\Lib\x64\VS2017;$(LibraryPath)</LibraryPath>
     <TargetName>$(ProjectName)d_x64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
